@@ -1,8 +1,8 @@
 // ...existing code...
 import React, { useState } from 'react';
-import { getContract } from '@/lib/contracts';
+import { CONTRACT_ADDRESSES } from '@/lib/contracts';
 import { ethers } from 'ethers';
-
+import {CONTRACT_ABIS} from "@/lib/contracts";
 type Role = 'Manufacturer' | 'Distributor' | 'Retailer';
 
 function RolePanel({ role }: { role: Role }) {
@@ -23,7 +23,7 @@ function RolePanel({ role }: { role: Role }) {
     try {
       const signer = await getSigner();
       // Use the correct contract name from your CONTRACTS registry
-      const contract = getContract('HandlingAddress', signer);
+      const contract = new ethers.Contract(CONTRACT_ADDRESSES.handlingaddresses, CONTRACT_ABIS.handlingaddresses, signer);
       // @ts-ignore call dynamic method
       const tx = await contract[method](...args);
       setStatusMsg('Transaction sent: ' + (tx.hash || 'pending'));

@@ -6,35 +6,70 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PackagePlus } from 'lucide-react';
+import {useContract} from "@/hooks/useContract";
+import { form } from 'viem/chains';
 
 export default function CreateBatch() {
+  const {getContractWrite} = useContract('basicmechanism');
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     manufacturer_address: '',
     batchName: '',
-    quantity: '',
+    quantity: 0,
     expiryDate: '',
+    price: 0,
+    ipfshash: '0x0000000000000000000000000000000000000000'
   });
+  const ipfshash="0x0000000000000000000000000000000000000000"; //placeholder for IPFS hash
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  if (!formData.batchName || !formData.quantity || !formData.expiryDate || !formData.manufacturer_address) {
+    return toast({
+      title: 'Error',
+      description: 'Please fill in all fields',
+      variant: 'destructive',
+    });
+  }
+
+  try {
+    // Convert types
+    setFormData({ manufacturer_address: formData.manufacturer_address, batchName: formData.batchName, quantity: formData.quantity, expiryDate: formData.expiryDate, price: formData.price, ipfshash:formData.ipfshash });
+    const expiry = Math.floor(new Date(formData.expiryDate).getTime() / 1000);
+    console.log("manufacturer_address:", formData.manufacturer_address);
+console.log("expiry:", expiry);
+console.log("price:", formData.price);
+console.log("ipfshash:", formData.ipfshash);
     
-    if (!formData.batchName || !formData.quantity || !formData.expiryDate || !formData.manufacturer_address) {
-      toast({
-        title: 'Error',
-        description: 'Please fill in all fields',
-        variant: 'destructive',
-      });
-      return;
-    }
+    const contract = await getContractWrite();
+    const tx = await contract.createBatch(formData.manufacturer_address, expiry,formData.price, formData.ipfshash);
+    await tx.wait();
+    alert("Batch Created!");
+  
 
     toast({
-      title: 'Success',
-      description: 'Batch created successfully on the blockchain',
+      title: "Success",
+      description: "Batch created successfully on the blockchain",
     });
-    
-    setFormData({manufacturer_address: '', batchName: '', quantity: '', expiryDate: '' });
-  };
+    // Reset form
+    setFormData({
+      manufacturer_address: '',
+      batchName: '',
+      quantity: 0,
+      expiryDate: '',
+      price: 0,
+      ipfshash: ''
+    });
+
+  } catch (error) {
+    toast({
+      title: "Blockchain Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  }
+};
+
 
   return (
     <div className="space-y-8">
@@ -87,8 +122,8 @@ export default function CreateBatch() {
                   id="quantity"
                   type="number"
                   placeholder="e.g., 10000"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  value={Number(formData.quantity)}
+                  onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
                 />
               </div>
 
@@ -99,6 +134,17 @@ export default function CreateBatch() {
                   type="date"
                   value={formData.expiryDate}
                   onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                />
+              </div>
+
+               <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="e.g., 10000"
+                  value={Number(formData.price)}
+                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                 />
               </div>
 
