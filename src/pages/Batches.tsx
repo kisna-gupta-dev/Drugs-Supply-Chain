@@ -3,14 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
+import { useState } from 'react';
+import {useContract} from "@/hooks/useContract";
+import { ethers } from 'ethers';
 
-const mockBatches = [
-  { id: 1001, owner: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb', status: 'Active' },
-  { id: 1002, owner: '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199', status: 'Transferred' },
-  { id: 1003, owner: '0xdD2FD4581271e230360230F9337D5c0430Bf44C0', status: 'Active' },
-  { id: 1004, owner: '0xbDA5747bFD65F08deb54cb465eB87D40e51B197E', status: 'Returned' },
-  { id: 1005, owner: '0x2546BcD3c84621e976D8185a91A922aE77ECEc30', status: 'Active' },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -25,7 +21,30 @@ const getStatusColor = (status: string) => {
   }
 };
 
+
 export default function Batches() {
+  
+const [ownerInput, setOwnerInput] = useState("");
+const [ownerBatches, setOwnerBatches] = useState([]);
+
+const searchOwnerBatches = async () => {
+  try {
+    if (!ownerInput) return;
+
+    const { getContractRead } = useContract("drugsupplychain");
+    const contract = await getContractRead(); // your hook
+    const batches = await contract.ownerToBatches(ownerInput);
+
+    // Convert bytes32 → string (optional)
+    const batchList = batches.map((b: string) =>
+      ethers.decodeBytes32String(b)
+    );
+
+    setOwnerBatches(batches);
+  } catch (err) {
+    console.error(err);
+  }
+};
   return (
     <div className="space-y-8">
       <div>
@@ -51,6 +70,20 @@ export default function Batches() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 flex items-center">
+            <input
+              type="text"
+              placeholder="Search Batch ID (bytes32 hex)"
+              value={ownerInput}
+              onChange={(e) => setOwnerInput(e.target.value)}
+              className="w-full rounded border px-3 py-2 text-sm"
+            />
+            <button
+              onClick={searchOwnerBatches}
+              className="rounded bg-primary px-4 py-2 text-white"
+              >Search
+            </button>
+            </div>
             <div className="rounded-lg border border-border">
               <Table>
                 <TableHeader>
@@ -61,13 +94,9 @@ export default function Batches() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockBatches.map((batch) => (
-                    <TableRow key={batch.id}>
-                      <TableCell className="font-medium">#{batch.id}</TableCell>
-                      <TableCell className="font-mono text-xs">{batch.owner}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(batch.status)}>{batch.status}</Badge>
-                      </TableCell>
+                  {ownerBatches.map((batchId, i) => (
+                    <TableRow key={i}>
+                    <TableCell className="font-mono text-xs">{batchId}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
