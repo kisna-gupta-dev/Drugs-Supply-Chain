@@ -40,7 +40,7 @@ const searchOwnerBatches = async () => {
       ethers.decodeBytes32String(b)
     );
 
-    setOwnerBatches(batches);
+    setOwnerBatches(batchList);
   } catch (err) {
     console.error(err);
   }
