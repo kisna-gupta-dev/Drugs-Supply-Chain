@@ -7,7 +7,8 @@ const navItems = [
   { title: 'All Batches', href: '/batches', icon: Package },
   { title: 'Transfer / Purchase', href: '/transfers', icon: ArrowLeftRight },
   { title: 'Returns & Refunds', href: '/returns', icon: Undo2 },
-  { title: 'Owner Options', href: '/ownerOptions', icon: Users }
+  { title: 'Owner Options', href: '/ownerOptions', icon: Users },
+  {title: 'Check Roles', href: '/checkroles', icon: Users}
 ];
 
 export function Sidebar() {

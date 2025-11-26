@@ -37,9 +37,9 @@ export default function CreateBatch() {
     setFormData({ manufacturer_address: formData.manufacturer_address, batchName: formData.batchName, quantity: formData.quantity, expiryDate: formData.expiryDate, price: formData.price, ipfshash:formData.ipfshash });
     const expiry = Math.floor(new Date(formData.expiryDate).getTime() / 1000);
     console.log("manufacturer_address:", formData.manufacturer_address);
-console.log("expiry:", expiry);
-console.log("price:", formData.price);
-console.log("ipfshash:", formData.ipfshash);
+    console.log("expiry:", expiry);
+    console.log("price:", formData.price);
+    console.log("ipfshash:", formData.ipfshash);
     
     const contract = await getContractWrite();
     const tx = await contract.createBatch(formData.manufacturer_address, expiry,formData.price, formData.ipfshash);

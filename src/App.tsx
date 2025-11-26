@@ -12,6 +12,8 @@ import Transfers from "./pages/Transfers";
 import Returns from "./pages/Returns";
 import NotFound from "./pages/NotFound";
 import OwnerOptionsPage from "./pages/ownerOptions";
+import CheckRole from "./pages/checkroles";
+
 const App = () => (
   <Providers>
     <TooltipProvider>
@@ -29,7 +31,8 @@ const App = () => (
                 <Route path="/batches" element={<Batches />} />
                 <Route path="/transfers" element={<Transfers />} />
                 <Route path="/returns" element={<Returns />} />
-                <Route path="/ownerOptions" element={<OwnerOptionsPage />} />
+                <Route path="/ownerOptions" element={<OwnerOptionsPage />} />4
+                <Route path="/checkroles" element={<CheckRole />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
