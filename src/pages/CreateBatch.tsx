@@ -44,12 +44,12 @@ export default function CreateBatch() {
     const contract = await getContractWrite();
     const tx = await contract.createBatch(formData.manufacturer_address, expiry,formData.price, formData.ipfshash);
     await tx.wait();
-    alert("Batch Created!");
   
 
     toast({
       title: "Success",
       description: "Batch created successfully on the blockchain",
+      variant: "default",
     });
     // Reset form
     setFormData({

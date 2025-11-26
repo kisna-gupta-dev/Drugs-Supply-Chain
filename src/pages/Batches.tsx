@@ -23,24 +23,42 @@ const getStatusColor = (status: string) => {
 
 
 export default function Batches() {
-  
+
+  const StatusEnum: Record<number, string> = {
+  0: "Manufactured",
+  1: "Owned by Distributor",
+  2: "Ready to Sell to Retailer",
+  3: "Owned by Retailer",
+  4: "Return Requested by Retailer",
+  5: "Return Requested by Distributor",
+  6: "Returned to Distributor",
+  7: "Returned to Manufacturer",
+  8: "Reselling to Distributor"
+};
 const [ownerInput, setOwnerInput] = useState("");
 const [ownerBatches, setOwnerBatches] = useState([]);
-
+const { getContractRead } = useContract("basicmechanism");
 const searchOwnerBatches = async () => {
   try {
     if (!ownerInput) return;
+    const contract = await getContractRead();
+    // 1. Get all batch IDs for this owner
+    const batchIds: string[] = await contract.getOwnerBatches(ownerInput);
 
-    const { getContractRead } = useContract("drugsupplychain");
-    const contract = await getContractRead(); // your hook
-    const batches = await contract.ownerToBatches(ownerInput);
-
-    // Convert bytes32 → string (optional)
-    const batchList = batches.map((b: string) =>
-      ethers.decodeBytes32String(b)
+    // 2. For each batchId, load full batch struct + decode enum
+    const detailedBatches = await Promise.all(
+      batchIds.map(async (batchId) => {
+        const batch = await contract.batchIdToBatch(batchId);
+        console.log("Fetched batch:", batchId, batch.statusEnum);
+        return {
+          batchId,
+          status: StatusEnum[batch.statusEnum],   // convert enum number → name
+        };
+      })
     );
 
-    setOwnerBatches(batchList);
+    setOwnerBatches(detailedBatches);
+
   } catch (err) {
     console.error(err);
   }
@@ -73,7 +91,7 @@ const searchOwnerBatches = async () => {
             <div className="mb-4 flex items-center">
             <input
               type="text"
-              placeholder="Search Batch ID (bytes32 hex)"
+              placeholder="Search BatchId by Owner Address"
               value={ownerInput}
               onChange={(e) => setOwnerInput(e.target.value)}
               className="w-full rounded border px-3 py-2 text-sm"
@@ -94,9 +112,11 @@ const searchOwnerBatches = async () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ownerBatches.map((batchId, i) => (
+                  {ownerBatches.map((batch, i) => (
                     <TableRow key={i}>
-                    <TableCell className="font-mono text-xs">{batchId}</TableCell>
+                      <TableCell className="font-mono">{batch.batchId}</TableCell>
+                      <TableCell>{ownerInput}</TableCell>
+                      <TableCell>{batch.status}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
