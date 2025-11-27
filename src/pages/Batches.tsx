@@ -8,19 +8,6 @@ import {useContract} from "@/hooks/useContract";
 import { ethers } from 'ethers';
 
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Active':
-      return 'bg-green-500/10 text-green-600 hover:bg-green-500/20';
-    case 'Transferred':
-      return 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20';
-    case 'Returned':
-      return 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20';
-    default:
-      return 'bg-muted text-muted-foreground';
-  }
-};
-
 
 export default function Batches() {
 

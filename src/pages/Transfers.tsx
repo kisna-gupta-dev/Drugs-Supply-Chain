@@ -5,14 +5,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeftRight, Wallet } from 'lucide-react';
-
+import { ArrowLeftRight, Badge, Package, Wallet } from 'lucide-react';
+import batchDetails from "@/hooks/batch-details";
 export default function Transfers() {
+  
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Active':
+      return 'bg-green-500/10 text-green-600 hover:bg-green-500/20';
+    case 'Transferred':
+      return 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20';
+    case 'Returned':
+      return 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+};
+
+  interface BatchInfo {
+  batchId: string;
+  price: any;
+  owner: any;
+  expiry: string;
+  status: string;
+}
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     batchId: '',
     receiverAddress: '',
   });
+  const [batchId, setBatchId] = useState("");
+  const [batchData, setBatchData] = useState<BatchInfo | null>(null);
 
   const validateWalletAddress = (address: string) => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -45,8 +68,23 @@ export default function Transfers() {
     });
     
     setFormData({ batchId: '', receiverAddress: '' });
-  };
 
+    
+  };
+  const fetch = async (batchId) => {
+    try {
+      const details = await batchDetails(batchId);
+      console.log("Fetched batch details:", details);
+      setBatchData(details);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch batch details',
+        variant: 'destructive',
+      });
+      setBatchData(null);
+    }
+  }
   return (
     <div className="space-y-8">
       <div>
@@ -58,6 +96,7 @@ export default function Transfers() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        className='flex gap-6'
       >
         <Card className="max-w-2xl">
           <CardHeader>
@@ -115,7 +154,66 @@ export default function Transfers() {
               </Button>
             </form>
           </CardContent>
-        </Card>
+          </Card>
+        <Card className="max-w-2xl">
+  <CardHeader>
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
+        <Package className="h-6 w-6 text-white" />
+      </div>
+      <div>
+        <CardTitle>Batch Details</CardTitle>
+        <CardDescription>Search a batch ID and view its metadata</CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+
+  <CardContent>
+    <div className="space-y-6">
+
+      {/* Search Input */}
+      <div className="space-y-2">
+        <Label htmlFor="searchBatchId">Batch ID</Label>
+        <Input
+          id="searchBatchId"
+          placeholder="Enter batch ID (bytes32 or hex)"
+          value={batchId}
+          onChange={(e) => setBatchId(e.target.value)}
+          className="font-mono"
+        />
+        <Button onClick={() => fetch(batchId)} className="w-full mt-2">
+          Search Batch
+        </Button>
+      </div>
+
+      {/* Result Box */}
+      {batchData && (
+        <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+          <div className="text-sm flex justify-between">
+            <span className="text-muted-foreground">Price</span>
+            <span className="font-semibold">{batchData.price.toString()} ETH</span>
+          </div>
+
+          <div className="text-sm flex justify-between">
+            <span className="text-muted-foreground">Manufacturer</span>
+            <span className="font-mono text-xs">{batchData.owner.toString().slice(0,6)}...{batchData.owner.toString().slice(-4)}</span>
+          </div>
+
+          <div className="text-sm flex justify-between">
+            <span className="text-muted-foreground">Expiry</span>
+            <span className="font-medium">{new Date(Number(batchData.expiry) * 1000).toLocaleDateString()}</span>
+          </div>
+
+          <div className="text-sm flex justify-between">
+            <span className="text-muted-foreground">Status</span>
+              {batchData.status}
+          </div>
+        </div>
+      )}
+      </div>
+    </CardContent>
+    </Card>
+
       </motion.div>
     </div>
   );
