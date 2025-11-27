@@ -49,10 +49,19 @@ const searchOwnerBatches = async () => {
     const detailedBatches = await Promise.all(
       batchIds.map(async (batchId) => {
         const batch = await contract.batchIdToBatch(batchId);
-        console.log("Fetched batch:", batchId, batch.statusEnum);
+        let owner = ownerInput;
+        if(batch.statusEnum == "0" || "7"){
+          owner = batch.manufacturer;
+        }else if(batch.statusEnum == "1" || "2" || "6" || "5" ||"8"){
+          owner = batch.distributor;
+        }
+        else{
+          owner = batch.retailer;
+        }
         return {
           batchId,
-          status: StatusEnum[batch.statusEnum],   // convert enum number → name
+          status: StatusEnum[batch.statusEnum],  // convert enum number → name
+          owner: owner
         };
       })
     );
@@ -115,7 +124,7 @@ const searchOwnerBatches = async () => {
                   {ownerBatches.map((batch, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-mono">{batch.batchId}</TableCell>
-                      <TableCell>{ownerInput}</TableCell>
+                      <TableCell>{batch.owner}</TableCell>
                       <TableCell>{batch.status}</TableCell>
                     </TableRow>
                   ))}
