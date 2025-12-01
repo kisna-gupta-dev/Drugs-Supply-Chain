@@ -60,7 +60,7 @@ const getStatusColor = (status: string) => {
     if(details.status === "Manufactured" || details.status === "Returned to Manufacturer"){
       console.log(details);
       console.log("Buying from Manufacturer", formData.batchId, formData.productPrice, details.price); 
-      const tx = await contract.buyBatchDistributor(formData.batchId, formData.productPrice, { value: details.price });
+      const tx = await contract.buyBatchDistributor(formData.batchId, formData.productPrice, { value: await ETHfromUSD(details.price) });
       await tx.wait();
       console.log("Batch purchased from Manufacturer:", tx);
     }
