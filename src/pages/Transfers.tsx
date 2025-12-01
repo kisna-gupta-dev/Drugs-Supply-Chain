@@ -27,6 +27,7 @@ const getStatusColor = (status: string) => {
   interface BatchInfo {
   batchId: string;
   price: any;
+  productPrice: any;
   owner: any;
   expiry: string;
   status: string;
@@ -66,7 +67,7 @@ const getStatusColor = (status: string) => {
     }
     else if(details.status === "Owned by Distributor" || details.status === "Reselling to Distributor" || details.status === "Returned to Distributor"){
       console.log("ETH from USD:", await ETHfromUSD(details.price));
-       const tx = await contract.buyBatchRetailer(formData.batchId, formData.productPrice, { value: await ETHfromUSD(details.price) });
+       const tx = await contract.buyBatchRetailer(formData.batchId, { value: await ETHfromUSD(details.productPrice) });
       await tx.wait();
     }
     toast({
@@ -93,133 +94,150 @@ const getStatusColor = (status: string) => {
     }
   }
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Buy Batch</h1>
-        <p className="text-muted-foreground">Purchase batch ownership via crypto payment</p>
-      </div>
+   <div className="space-y-8">
+  {/* Header */}
+  <div className="space-y-2">
+    <h1 className="text-3xl font-bold text-foreground">Buy Batch</h1>
+    <p className="text-muted-foreground">Purchase batch ownership via crypto payment</p>
+  </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className='flex gap-6'
-      >
-        <Card className="max-w-2xl">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
-                <ArrowLeftRight className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle>Buy Batch</CardTitle>
-                <CardDescription>Buy Batch for any product from BatchId</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="batchId">Batch ID</Label>
-                <Input
-                  id="batchId"
-                  placeholder="e.g., 0x1234...abcd"
-                  value={formData.batchId}
-                  onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="productPrice">Product Price (single value of product)</Label>
-                <div className="relative">
-                  <Wallet className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="productPrice"
-                    placeholder="0.00"
-                    className="pl-10 font-mono text-sm"
-                    value={formData.productPrice}
-                    onChange={(e) => setFormData({ ...formData, productPrice: e.target.value })}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Write product price in USD (for single product unit)
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border bg-muted/50 p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Payment Method</span>
-                  <span className="font-medium text-foreground">Crypto Only</span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Transaction will be processed on the blockchain using your connected wallet
-                </p>
-              </div>
-
-              <Button type="submit" className="w-full">
-                Buy Batch
-              </Button>
-            </form>
-          </CardContent>
-          </Card>
-        <Card className="max-w-2xl">
-  <CardHeader>
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
-        <Package className="h-6 w-6 text-white" />
-      </div>
-      <div>
-        <CardTitle>Batch Details</CardTitle>
-        <CardDescription>Search a batch ID and view its metadata</CardDescription>
-      </div>
-    </div>
-  </CardHeader>
-
-  <CardContent>
-    <div className="space-y-6">
-
-      {/* Search Input */}
-      <div className="space-y-2">
-        <Label htmlFor="searchBatchId">Batch ID</Label>
-        <Input
-          id="searchBatchId"
-          placeholder="Enter batch ID (bytes32 or hex)"
-          value={batchId}
-          onChange={(e) => setBatchId(e.target.value)}
-          className="font-mono"
-        />
-        <Button onClick={() => fetch(batchId)} className="w-full mt-2">
-          Search Batch
-        </Button>
-      </div>
-
-      {/* Result Box */}
-      {batchData && (
-        <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
-          <div className="text-sm flex justify-between">
-            <span className="text-muted-foreground">Price</span>
-            <span className="font-semibold">{batchData.price.toString()} ETH</span>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+  >
+    {/* Left Card (Buy Form) */}
+    <Card className="shadow-sm hover:shadow-md transition-shadow border-border/60">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 shadow">
+            <ArrowLeftRight className="h-6 w-6 text-white" />
           </div>
-
-          <div className="text-sm flex justify-between">
-            <span className="text-muted-foreground">Manufacturer</span>
-            <span className="font-mono text-xs">{batchData.owner.toString().slice(0,6)}...{batchData.owner.toString().slice(-4)}</span>
-          </div>
-
-          <div className="text-sm flex justify-between">
-            <span className="text-muted-foreground">Expiry</span>
-            <span className="font-medium">{new Date(Number(batchData.expiry) * 1000).toLocaleDateString()}</span>
-          </div>
-
-          <div className="text-sm flex justify-between">
-            <span className="text-muted-foreground">Status</span>
-              {batchData.status}
+          <div>
+            <CardTitle className="text-lg">Buy Batch</CardTitle>
+            <CardDescription>Enter product details and purchase batch</CardDescription>
           </div>
         </div>
-      )}
-      </div>
-    </CardContent>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Batch ID */}
+          <div className="space-y-2">
+            <Label htmlFor="batchId">Batch ID</Label>
+            <Input
+              id="batchId"
+              placeholder="0x1234...abcd"
+              className="font-mono"
+              value={formData.batchId}
+              onChange={(e) =>
+                setFormData({ ...formData, batchId: e.target.value })
+              }
+            />
+          </div>
+
+          {/* Product Price */}
+          <div className="space-y-2">
+            <Label htmlFor="productPrice">Product Price (USD) for Distributors Only</Label>
+            <div className="relative">
+              <Wallet className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="productPrice"
+                placeholder="0.00"
+                className="pl-10 font-mono"
+                value={formData.productPrice}
+                onChange={(e) =>
+                  setFormData({ ...formData, productPrice: e.target.value })
+                }
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Price of a single product unit (in USD)
+            </p>
+          </div>
+
+          {/* Info Box */}
+          <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-1">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Payment Method</span>
+              <span className="font-semibold">Crypto Only</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Based on real-time ETH/USD price via Chainlink.
+            </p>
+          </div>
+
+          {/* Submit Button */}
+          <Button type="submit" className="w-full text-sm py-2">
+            Buy Batch
+          </Button>
+        </form>
+      </CardContent>
     </Card>
 
+    {/* Right Card (Batch Lookup) */}
+    <Card className="shadow-sm hover:shadow-md transition-shadow border-border/60">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow">
+            <Package className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Batch Details</CardTitle>
+            <CardDescription>Enter batch ID to view metadata</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Search */}
+        <div className="space-y-2">
+          <Label htmlFor="searchBatchId">Search Batch ID</Label>
+          <Input
+            id="searchBatchId"
+            placeholder="0x1234...abcd"
+            className="font-mono"
+            value={batchId}
+            onChange={(e) => setBatchId(e.target.value)}
+          />
+          <Button onClick={async () => await fetch(batchId)} className="w-full mt-2">
+            Search
+          </Button>
+        </div>
+
+        {/* Result Box */}
+        {batchData && (
+          <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Price</span>
+              <span className="font-semibold">{batchData.price.toString()} USD</span>
+            </div>
+          
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Product Price (USD)</span>
+              <span className="font-semibold">{batchData.productPrice.toString()} USD</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Owner</span>
+              <span className="font-mono text-xs">{batchData.owner.toString()}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Expiry</span>
+              <span className="font-medium">
+                {new Date(Number(batchData.expiry) * 1000).toLocaleDateString("en-US", {year: "numeric", month: "short", day: "numeric"})}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Status</span>
+              {batchData.status}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
       </motion.div>
     </div>
   );
