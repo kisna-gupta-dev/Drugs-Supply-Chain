@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeftRight, Badge, Package, Wallet } from 'lucide-react';
 import batchDetails from "@/hooks/batch-details";
 import {useContract} from "@/hooks/useContract";
-
+import {ETHfromUSD} from "@/hooks/convertETHfromUSD";
 export default function Transfers() {
   
 const getStatusColor = (status: string) => {
@@ -59,10 +59,15 @@ const getStatusColor = (status: string) => {
     const details = await batchDetails(formData.batchId);
     if(details.status === "Manufactured" || details.status === "Returned to Manufacturer"){
       console.log(details);
-      console.log("Buying from Manufacturer", formData.batchId, formData.productPrice); 
+      console.log("Buying from Manufacturer", formData.batchId, formData.productPrice, details.price); 
       const tx = await contract.buyBatchDistributor(formData.batchId, formData.productPrice, { value: details.price });
       await tx.wait();
-      console.log("Batch purchased from Distributor:", tx);
+      console.log("Batch purchased from Manufacturer:", tx);
+    }
+    else if(details.status === "Owned by Distributor" || details.status === "Reselling to Distributor" || details.status === "Returned to Distributor"){
+      console.log("ETH from USD:", await ETHfromUSD(details.price));
+       const tx = await contract.buyBatchRetailer(formData.batchId, formData.productPrice, { value: await ETHfromUSD(details.price) });
+      await tx.wait();
     }
     toast({
       title: 'Purchase Initiated',
