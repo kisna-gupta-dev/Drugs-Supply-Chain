@@ -37,9 +37,9 @@ const searchOwnerBatches = async () => {
       batchIds.map(async (batchId) => {
         const batch = await contract.batchIdToBatch(batchId);
         let owner = ownerInput;
-        if(batch.statusEnum == "0" || "7"){
+        if(batch.statusEnum == "0" || batch.statusEnum == "7"){
           owner = batch.manufacturer;
-        }else if(batch.statusEnum == "1" || "2" || "6" || "5" ||"8"){
+        }else if(batch.statusEnum == "1" || batch.statusEnum == "2" || batch.statusEnum == "6" || batch.statusEnum == "5" || batch.statusEnum == "8"){
           owner = batch.distributor;
         }
         else{

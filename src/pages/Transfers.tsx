@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeftRight, Badge, Package, Wallet } from 'lucide-react';
 import batchDetails from "@/hooks/batch-details";
+import {useContract} from "@/hooks/useContract";
+
 export default function Transfers() {
   
 const getStatusColor = (status: string) => {
@@ -32,19 +34,19 @@ const getStatusColor = (status: string) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     batchId: '',
-    receiverAddress: '',
+    productPrice: '',
   });
   const [batchId, setBatchId] = useState("");
   const [batchData, setBatchData] = useState<BatchInfo | null>(null);
-
+  const { getContractWrite } = useContract("basicmechanism");
   const validateWalletAddress = (address: string) => {
     return /^0x[a-fA-F0-9]{40}$/.test(address);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.batchId || !formData.receiverAddress) {
+    if (!formData.batchId || !formData.productPrice) {
       toast({
         title: 'Error',
         description: 'Please fill in all fields',
@@ -52,22 +54,22 @@ const getStatusColor = (status: string) => {
       });
       return;
     }
-
-    if (!validateWalletAddress(formData.receiverAddress)) {
-      toast({
-        title: 'Invalid Address',
-        description: 'Please enter a valid wallet address (0x...)',
-        variant: 'destructive',
-      });
-      return;
+    
+    const contract = await getContractWrite();
+    const details = await batchDetails(formData.batchId);
+    if(details.status === "Manufactured" || details.status === "Returned to Manufacturer"){
+      console.log(details);
+      console.log("Buying from Manufacturer", formData.batchId, formData.productPrice); 
+      const tx = await contract.buyBatchDistributor(formData.batchId, formData.productPrice, { value: details.price });
+      await tx.wait();
+      console.log("Batch purchased from Distributor:", tx);
     }
-
     toast({
-      title: 'Transfer Initiated',
-      description: 'Batch transfer transaction submitted to blockchain',
+      title: 'Purchase Initiated',
+      description: 'Batch purchase transaction submitted to blockchain',
     });
     
-    setFormData({ batchId: '', receiverAddress: '' });
+    setFormData({ batchId: '', productPrice: '' });
 
     
   };
@@ -88,8 +90,8 @@ const getStatusColor = (status: string) => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Transfer / Purchase</h1>
-        <p className="text-muted-foreground">Transfer batch ownership via crypto payment</p>
+        <h1 className="text-3xl font-bold text-foreground">Buy Batch</h1>
+        <p className="text-muted-foreground">Purchase batch ownership via crypto payment</p>
       </div>
 
       <motion.div
@@ -105,8 +107,8 @@ const getStatusColor = (status: string) => {
                 <ArrowLeftRight className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle>Transfer Batch</CardTitle>
-                <CardDescription>Send batch to another wallet address</CardDescription>
+                <CardTitle>Buy Batch</CardTitle>
+                <CardDescription>Buy Batch for any product from BatchId</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -116,26 +118,25 @@ const getStatusColor = (status: string) => {
                 <Label htmlFor="batchId">Batch ID</Label>
                 <Input
                   id="batchId"
-                  placeholder="e.g., 1001"
+                  placeholder="e.g., 0x1234...abcd"
                   value={formData.batchId}
                   onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
                 />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="receiverAddress">Receiver Wallet Address</Label>
+                <Label htmlFor="productPrice">Product Price (single value of product)</Label>
                 <div className="relative">
                   <Wallet className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="receiverAddress"
-                    placeholder="0x..."
+                    id="productPrice"
+                    placeholder="0.00"
                     className="pl-10 font-mono text-sm"
-                    value={formData.receiverAddress}
-                    onChange={(e) => setFormData({ ...formData, receiverAddress: e.target.value })}
+                    value={formData.productPrice}
+                    onChange={(e) => setFormData({ ...formData, productPrice: e.target.value })}
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Must be a valid Ethereum address starting with 0x
+                  Write product price in USD (for single product unit)
                 </p>
               </div>
 
@@ -150,7 +151,7 @@ const getStatusColor = (status: string) => {
               </div>
 
               <Button type="submit" className="w-full">
-                Transfer / Purchase Batch
+                Buy Batch
               </Button>
             </form>
           </CardContent>
