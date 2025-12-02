@@ -3,14 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {useContract} from "@/hooks/useContract";
 import { ethers } from 'ethers';
+import { useAccount } from "wagmi";
 
 
 
 export default function Batches() {
 
+   
   const StatusEnum: Record<number, string> = {
   0: "Manufactured",
   1: "Owned by Distributor",
@@ -21,16 +23,19 @@ export default function Batches() {
   6: "Returned to Distributor",
   7: "Returned to Manufacturer",
   8: "Reselling to Distributor"
-};
-const [ownerInput, setOwnerInput] = useState("");
-const [ownerBatches, setOwnerBatches] = useState([]);
-const { getContractRead } = useContract("basicmechanism");
-const searchOwnerBatches = async () => {
+  };
+  
+  const { address, isConnected } = useAccount();
+  const [ownerInput, setOwnerInput] = useState("");
+  const [ownerBatches, setOwnerBatches] = useState([]);
+  const { getContractRead } = useContract("basicmechanism");
+  const searchOwnerBatches = async () => {
+
   try {
-    if (!ownerInput) return;
+    // if (!ownerInput) return;
     const contract = await getContractRead();
     // 1. Get all batch IDs for this owner
-    const batchIds: string[] = await contract.getOwnerBatches(ownerInput);
+    const batchIds: string[] = await contract.getOwnerBatches(address);
 
     // 2. For each batchId, load full batch struct + decode enum
     const detailedBatches = await Promise.all(
@@ -57,15 +62,27 @@ const searchOwnerBatches = async () => {
 
   } catch (err) {
     console.error(err);
-  }
-};
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">All Batches</h1>
-        <p className="text-muted-foreground">View all registered drug batches</p>
-      </div>
+    }
+  };
+  
+  const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const totalPages = Math.ceil(ownerBatches.length / itemsPerPage);
+
+  const currentItems = ownerBatches.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  useEffect(() => {
+    if(isConnected){
+      searchOwnerBatches();
+    }})
+  
+  
+    return (
+    <div className="space-y-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -84,42 +101,64 @@ const searchOwnerBatches = async () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 flex items-center">
-            <input
-              type="text"
-              placeholder="Search BatchId by Owner Address"
-              value={ownerInput}
-              onChange={(e) => setOwnerInput(e.target.value)}
-              className="w-full rounded border px-3 py-2 text-sm"
-            />
-            <button
-              onClick={searchOwnerBatches}
-              className="rounded bg-primary px-4 py-2 text-white"
-              >Search
-            </button>
-            </div>
+  
             <div className="rounded-lg border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Batch ID</TableHead>
-                    <TableHead>Owner Address</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ownerBatches.map((batch, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-mono">{batch.batchId}</TableCell>
-                      <TableCell>{batch.owner}</TableCell>
-                      <TableCell>{batch.status}</TableCell>
-                    </TableRow>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                  {currentItems.map((batch, i) => (
+                    <div
+                      key={i}
+                      className="border rounded-xl p-4 bg-card shadow hover:shadow-md transition-all"
+                    >
+                      <p className="text-xs text-muted-foreground">Batch ID</p>
+                      <p className="font-mono font-semibold break-all">{batch.batchId}</p>
+
+                      <div className="mt-3">
+                        <p className="text-xs text-muted-foreground">Owner</p>
+                        <p className="font-mono text-sm truncate">
+                          {batch.owner.slice(0, 6)}...{batch.owner.slice(-4)}
+                        </p>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="text-xs text-muted-foreground">Status</p>
+                        <span className="text-sm font-semibold">{batch.status}</span>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
             </div>
           </CardContent>
         </Card>
+        <div className="flex justify-center items-center mt-6 gap-3">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            &lt;
+          </button>
+
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentPage(index + 1)}
+              className={`px-3 py-1 border rounded ${
+                currentPage === index + 1 ? "bg-primary text-white" : ""
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            &gt;
+          </button>
+        </div>
+
       </motion.div>
     </div>
   );
