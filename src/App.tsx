@@ -13,7 +13,7 @@ import Returns from "./pages/Returns";
 import NotFound from "./pages/NotFound";
 import OwnerOptionsPage from "./pages/ownerOptions";
 import CheckRole from "./pages/checkroles";
-
+import Marketplace from "./pages/marketplace";
 const App = () => (
   <Providers>
     <TooltipProvider>
@@ -33,6 +33,7 @@ const App = () => (
                 <Route path="/returns" element={<Returns />} />
                 <Route path="/ownerOptions" element={<OwnerOptionsPage />} />4
                 <Route path="/checkroles" element={<CheckRole />} />
+                <Route path= "/marketplace" element={<Marketplace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

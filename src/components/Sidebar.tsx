@@ -1,14 +1,15 @@
 import { NavLink } from '@/components/NavLink';
-import { LayoutDashboard, PackagePlus, Package, ArrowLeftRight, Undo2,Users } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, Package, ArrowLeftRight, Undo2, Users, ShoppingBag } from 'lucide-react';
 
 const navItems = [
   { title: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { title: 'Marketplace', href: '/marketplace', icon: ShoppingBag},
   { title: 'Create Batch', href: '/create-batch', icon: PackagePlus },
   { title: 'All Batches', href: '/batches', icon: Package },
   { title: 'Transfer / Purchase', href: '/transfers', icon: ArrowLeftRight },
   { title: 'Returns & Refunds', href: '/returns', icon: Undo2 },
   { title: 'Owner Options', href: '/ownerOptions', icon: Users },
-  {title: 'Check Roles', href: '/checkroles', icon: Users}
+  { title: 'Check Roles', href: '/checkroles', icon: Users}
 ];
 
 export function Sidebar() {
