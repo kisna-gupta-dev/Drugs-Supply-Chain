@@ -8,7 +8,7 @@ import { useContract } from "@/hooks/useContract";
 import { motion } from "framer-motion";
 
 export default function Marketplace() {
-  const { getContractRead } = useContract("drugsupplychain");
+  const { getContractRead } = useContract("basicmechanism");
 
   const [batches, setBatches] = useState<string[]>([]);
   const [details, setDetails] = useState<any[]>([]);
@@ -27,9 +27,7 @@ export default function Marketplace() {
     const loadBatches = async () => {
       try {
         const contract = await getContractRead();
-        const allBatches = await contract.allBatchIds();
-                console.log("Loading batches for marketplace...", allBatches);
-
+        const allBatches = await contract.getAllBatches();
         setBatches(allBatches);
         const loaded = await Promise.all(
           allBatches.map(async (batchId: string) => {
@@ -90,19 +88,24 @@ export default function Marketplace() {
 
                 <p className="text-sm">
                   <span className="text-muted-foreground">Price:</span>{" "}
-                  <span className="font-semibold">{item.price} USD</span>
+                  <span className="font-semibold">{item.price.toString()} USD</span>
                 </p>
 
                 <p className="text-sm">
                   <span className="text-muted-foreground">Expiry:</span>{" "}
-                  <span className="font-semibold">{item.expiry}</span>
+                  <span className="font-semibold">{new Date(Number(item.expiry) * 1000).toLocaleDateString("en-US", {year: "numeric", month: "short", day: "numeric"})}</span>
                 </p>
               </div>
 
               {/* Right Section */}
-              <Button className="h-12 px-6 text-md font-semibold">
+                <Button
+                onClick={() =>
+                  (window.location.href = `/transfers`)
+                }
+                className="h-12 px-6 text-md font-semibold"
+                >
                 Buy
-              </Button>
+                </Button>
             </Card>
           </motion.div>
         ))}
